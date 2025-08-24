@@ -6,7 +6,6 @@ import (
     "context"
     "path/filepath"
     "fmt"
-	"strings"
 )
 
 func Run() {
@@ -28,7 +27,7 @@ cmd := &cli.Command{
 		}
 
 		path := cmd.Args().First()
-		result, err := GetPathSize(path, true, false, false)
+		result, err := GetPathSize(path, false, false, true)
 		if err != nil {
 			return err
 		}
@@ -56,34 +55,35 @@ func GetPathSize(path string, recursive, human, all bool) (string, error) {
 func GetSize(path string, recursive, all bool) (int64, error) {
     var totalSize int64
 
-    err := filepath.Walk(path, func(currentPath string, info os.FileInfo, err error) error {
+    err := filepath.WalkDir(path, func(currentPath string, entry os.DirEntry, err error) error {
         if err != nil {
             return err
         }
 
         // Skip hidden files if  all == false
-        if !all && strings.HasPrefix(info.Name(), ".") {
-            if info.IsDir() {
+        if !all && entry.Name()[0] == '.' {
+            if entry.IsDir() {
                 return filepath.SkipDir
             }
             return nil
         }
 
         // If not in recursive mode, only files in the root of the directory are considered
-        if !recursive {
-            rel, _ := filepath.Rel(path, currentPath)
-            if strings.Contains(rel, string(os.PathSeparator)) {
-                if info.IsDir() {
-                    return filepath.SkipDir
-                }
-                return nil
+        if !recursive && filepath.Dir(currentPath) != path {
+            if entry.IsDir() {
+                return filepath.SkipDir
             }
+            return nil
         }
 
-        if !info.IsDir() {
+        // Getting file size
+        if !entry.IsDir() {
+            info, err := entry.Info()
+            if err != nil {
+                return err
+            }
             totalSize += info.Size()
         }
-
         return nil
     })
 
