@@ -6,36 +6,37 @@ import (
     "context"
     "path/filepath"
     "fmt"
+	"strings"
 )
 
 func Run() {
-    // cmd := &cli.Command{
-    //     Name:  "hexlet-path-size",
-    //     Usage: "print size of a file or directory",
-    // }
+	cmd := &cli.Command {
+		Name:  "hexlet-path-size",
+		Usage: "print size of a file or directory",
+		Flags: []cli.Flag {
+			&cli.BoolFlag {
+				Name:  "human",
+				Aliases: []string{"H"},
+				Usage: "human-readable sizes (auto-select unit)",
+			},
+		},
+		Action: func(ctx context.Context, cmd *cli.Command) error {
+			if cmd.Args().Len() == 0 {
+				return fmt.Errorf("path argument is required")
+			}
 
-    // err := cmd.Run(context.Background(), os.Args)
-    // if err != nil {
-    //     // fmt.Println("hexlet-path-size: undefined operand \nTry hexlet-path-size --help for more information")
-    // }
-cmd := &cli.Command{
-	Name:  "hexlet-path-size",
-	Usage: "print size of a file or directory",
-	Action: func(ctx context.Context, cmd *cli.Command) error {
-		if cmd.Args().Len() == 0 {
-			return fmt.Errorf("path argument is required")
-		}
+			path := cmd.Args().First()
+			human := cmd.Bool("human")
 
-		path := cmd.Args().First()
-		result, err := GetPathSize(path, false, false, true)
-		if err != nil {
-			return err
-		}
+			result, err := GetPathSize(path, true, human, false)
+			if err != nil {
+				return err
+			}
 
-		fmt.Println(result)
-		return nil
-	},
-}
+			fmt.Println(result)
+			return nil
+		},
+	}
     if err := cmd.Run(context.Background(), os.Args); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
@@ -44,10 +45,11 @@ cmd := &cli.Command{
 
 func GetPathSize(path string, recursive, human, all bool) (string, error) {
     size, err := GetSize(path, recursive, all)
-    s := ""
-    if err == nil {
-        s = fmt.Sprintf("%d    %s", size, path)
+	if err != nil {
+        return "", err
     }
+
+    s := fmt.Sprintf("%s    %s", FormatSize(size, human), path)
     
     return s, err
 }
@@ -69,12 +71,16 @@ func GetSize(path string, recursive, all bool) (int64, error) {
         }
 
         // If not in recursive mode, only files in the root of the directory are considered
-        if !recursive && filepath.Dir(currentPath) != path {
-            if entry.IsDir() {
-                return filepath.SkipDir
-            }
-            return nil
-        }
+        rel, err := filepath.Rel(path, currentPath)
+		if err != nil {
+    		return err
+		}
+		if !recursive && strings.Contains(rel, string(os.PathSeparator)) {
+    		if entry.IsDir() {
+        		return filepath.SkipDir
+    		}
+    		return nil
+		}
 
         // Getting file size
         if !entry.IsDir() {
@@ -89,4 +95,25 @@ func GetSize(path string, recursive, all bool) (int64, error) {
 
     return totalSize, err
 }
+
+func FormatSize(size int64, human bool) string {
+    if !human {
+        return fmt.Sprintf("%dB", size)
+    }
+
+    const unit = 1024
+    if size < unit {
+        return fmt.Sprintf("%dB", size)
+    }
+
+    div, exp := int64(unit), 0
+    for n := size / unit; n >= unit; n /= unit {
+        div *= unit
+        exp++
+    }
+
+    units := []string{"KB", "MB", "GB", "TB", "PB", "EB"}
+    return fmt.Sprintf("%.1f%s", float64(size)/float64(div), units[exp])
+}
+
 
