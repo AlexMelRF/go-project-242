@@ -14,7 +14,7 @@ type testCase struct {
 var testDataArray = []testCase {
 	{"./testdata/dir1", 1599, true, false},
 	{"./testdata/dir1/dir2", 1599, true, false},
-	{"./testdata/dir1", 1998, true, true},
+	{"./testdata/dir1", 3997, true, true},
 	{"./testdata/dir1/dir2", 1599, false, true},
 	{"./testdata", 2399, false, true},
 }

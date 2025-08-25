@@ -19,6 +19,11 @@ func Run() {
 				Aliases: []string{"H"},
 				Usage: "human-readable sizes (auto-select unit)",
 			},
+            &cli.BoolFlag {
+				Name:  "all",
+				Aliases: []string{"a"},
+				Usage: "include hidden files and directories",
+			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			if cmd.Args().Len() == 0 {
@@ -27,8 +32,9 @@ func Run() {
 
 			path := cmd.Args().First()
 			human := cmd.Bool("human")
+            all := cmd.Bool("all")
 
-			result, err := GetPathSize(path, true, human, false)
+			result, err := GetPathSize(path, false, human, all)
 			if err != nil {
 				return err
 			}
