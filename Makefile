@@ -4,15 +4,14 @@ build:
 run:
 	go run cmd/hexlet-path-size/main.go
 
-# clean:
-# 	rm -rf bin/*
+clean:
+	rm -rf bin/*
 
-deps:
-	go mod download
-
-lint:
-	golangci-lint run ./...
+# lint:
+# 	golangci-lint run ./..
 
 test:
 	go test -v ./...
-# 	go test ./... -v | grep -v "no test files"
+
+install: build
+	sudo cp bin/hexlet-path-size /usr/local/bin/hexlet-path-size
