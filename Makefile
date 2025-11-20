@@ -15,3 +15,7 @@ test:
 
 install: build
 	sudo cp bin/hexlet-path-size /usr/local/bin/hexlet-path-size
+
+reinstall: build
+	sudo rm /usr/local/bin/hexlet-path-size
+	sudo cp bin/hexlet-path-size /usr/local/bin/hexlet-path-size
