@@ -2,58 +2,10 @@ package code
 
 import (
     "os"
-    "github.com/urfave/cli/v3"
-    "context"
     "path/filepath"
     "fmt"
 	"strings"
 )
-
-func Run() {
-	cmd := &cli.Command {
-		Name:  "hexlet-path-size",
-		Usage: "print size of a file or directory",
-		Flags: []cli.Flag {
-			&cli.BoolFlag {
-				Name:  "human",
-				Aliases: []string{"H"},
-				Usage: "human-readable sizes (auto-select unit)",
-			},
-            &cli.BoolFlag {
-				Name:  "all",
-				Aliases: []string{"a"},
-				Usage: "include hidden files and directories",
-			},
-            &cli.BoolFlag {
-				Name:  "recursive",
-				Aliases: []string{"r"},
-				Usage: "recursive size of directories",
-			},
-		},
-		Action: func(ctx context.Context, cmd *cli.Command) error {
-			if cmd.Args().Len() == 0 {
-				return fmt.Errorf("path argument is required")
-			}
-
-			path := cmd.Args().First()
-			human := cmd.Bool("human")
-            all := cmd.Bool("all")
-            recursive := cmd.Bool("recursive")
-
-			result, err := GetPathSize(path, recursive, human, all)
-			if err != nil {
-				return err
-			}
-
-			fmt.Println(result)
-			return nil
-		},
-	}
-    if err := cmd.Run(context.Background(), os.Args); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		os.Exit(1)
-    }
-}
 
 func GetPathSize(path string, recursive, human, all bool) (string, error) {
     size, err := GetSize(path, recursive, all)
@@ -69,39 +21,71 @@ func GetPathSize(path string, recursive, human, all bool) (string, error) {
 func GetSize(path string, recursive, all bool) (int64, error) {
     var totalSize int64
 
-    err := filepath.WalkDir(path, func(currentPath string, entry os.DirEntry, err error) error {
-        if err != nil {
-            return err
-        }
+    // get info about the root path
+    rootInfo, err := os.Lstat(path)
+    if err != nil {
+        return 0, fmt.Errorf("cannot access '%s': %w", path, err)
+    }
 
-        // Skip hidden files if  all == false
-        if !all && entry.Name()[0] == '.' {
-            if entry.IsDir() {
-                return filepath.SkipDir
-            }
+    // if it is a file, just return its size
+    if !rootInfo.IsDir() {
+        return rootInfo.Size(), nil
+    }
+
+    // if it's a dir - use filepath.WalkDir
+    err = filepath.WalkDir(path, func(currentPath string, entry os.DirEntry, err error) error {
+        if err != nil {
+            // in case of a file access error, we display a warn and continue
+            fmt.Fprintf(os.Stderr, "Warning: cannot access '%s': %v\n", currentPath, err)
             return nil
         }
 
-        // If not in recursive mode, only files in the root of the directory are considered
+        // get the relative path from the root dir
         rel, err := filepath.Rel(path, currentPath)
-		if err != nil {
-    		return err
-		}
-		if !recursive && strings.Contains(rel, string(os.PathSeparator)) {
-    		if entry.IsDir() {
-        		return filepath.SkipDir
-    		}
-    		return nil
-		}
+        if err != nil {
+            fmt.Fprintf(os.Stderr, "Warning: cannot get relative path for '%s': %v\n", currentPath, err)
+            return nil
+        }
 
-        // Getting file size
-        if !entry.IsDir() {
-            info, err := entry.Info()
-            if err != nil {
-                return err
+        // skip hidden files/dirs if all == false
+        // check each path component for hidden status
+        if !all {
+            pathComponents := strings.Split(rel, string(os.PathSeparator))
+            for _, component := range pathComponents {
+                if component != "." && component != ".." && strings.HasPrefix(component, ".") {
+                    if entry.IsDir() {
+                        return filepath.SkipDir
+                    }
+                    return nil
+                }
             }
+        }
+
+        // if not in recursive mode, skip subdirs and their contents
+        if !recursive {
+            // if it's a subdir (not the root), skip it
+            if rel != "." && entry.IsDir() {
+                return filepath.SkipDir
+            }
+            
+            // if this is a file in a subdir, skip it
+            if rel != "." && strings.Contains(rel, string(os.PathSeparator)) {
+                return nil
+            }
+        }
+
+        // get file info with os.Lstat
+        info, err := os.Lstat(currentPath)
+        if err != nil {
+            fmt.Fprintf(os.Stderr, "Warning: cannot get file info for '%s': %v\n", currentPath, err)
+            return nil
+        }
+
+        // only consider regular files (not dirs)
+        if !info.IsDir() {
             totalSize += info.Size()
         }
+
         return nil
     })
 
