@@ -60,64 +60,6 @@ func TestGetSize(t *testing.T) {
 	}
 }
 
-// helper func for debugging file sizes
-func debugFileSizes(t *testing.T) {
-	files := []string{
-		"testdata/test_file.txt",
-		"testdata/.hidden_file", 
-		"testdata/unicode_АБ.txt",
-		"testdata/dir1/file1.txt",
-		"testdata/dir1/.hidden_file",
-		"testdata/dir1/dir2/file2.txt",
-	}
-	
-	for _, file := range files {
-		info, err := os.Stat(file)
-		if err == nil {
-			t.Logf("File %s: %d bytes", file, info.Size())
-		}
-	}
-}
-
-// helper func to get the actual file sizes
-func getRealFileSizes() map[string]int64 {
-	sizes := make(map[string]int64)
-	
-	// get size of each file
-	file1, err := os.Stat("./testdata/dir1/file1.txt")
-	if err == nil {
-		sizes["file1"] = file1.Size()
-	}
-	
-	file2, err := os.Stat("./testdata/dir1/dir2/file2.txt")
-	if err == nil {
-		sizes["file2"] = file2.Size()
-	}
-	
-	hidden, err := os.Stat("./testdata/.hidden_file")
-	if err == nil {
-		sizes["hidden"] = hidden.Size()
-	}
-	
-	testFile, err := os.Stat("./testdata/test_file.txt")
-	if err == nil {
-		sizes["testFile"] = testFile.Size()
-	}
-	
-	unicodeFile, err := os.Stat("./testdata/unicode_АБ.txt")
-	if err == nil {
-		sizes["unicodeFile"] = unicodeFile.Size()
-	}
-	
-	sizes["dir1_recursive_all_false"] = sizes["file1"] + sizes["file2"]
-	sizes["dir2_recursive_all_false"] = sizes["file2"]
-	sizes["dir1_recursive_all_true"] = sizes["file1"] + sizes["file2"] + sizes["hidden"]
-	sizes["dir2_non_recursive_all_true"] = sizes["file2"]
-	sizes["testdata_non_recursive_all_true"] = sizes["testFile"] + sizes["unicodeFile"] + sizes["hidden"]
-	
-	return sizes
-}
-
 func TestGetPathSize(t *testing.T) {
 	// create test struct
 	setupTestData(t)
@@ -158,7 +100,7 @@ func TestGetPathSize(t *testing.T) {
 		},
 		{
 			name:      "unicode_path_human",
-			path:      "./testdata/unicode_АБ.txt",
+			path:      "./testdata/unicode_файл.txt",
 			recursive: false,
 			human:     true,
 			all:       false,
@@ -284,7 +226,7 @@ func setupTestData(t *testing.T) {
 	files := map[string]string{
 		"testdata/test_file.txt":       "test content123", // 15 bytes
 		"testdata/.hidden_file":        "test content123", // 15 bytes  
-		"testdata/unicode_АБ.txt":      "test content123", // 15 bytes
+		"testdata/unicode_файл.txt":    "test content123", // 15 bytes
 		"testdata/dir1/file1.txt":      "test content123", // 15 bytes
 		"testdata/dir1/.hidden_file":   "test content123", // 15 bytes
 		"testdata/dir1/dir2/file2.txt": "test content123", // 15 bytes
@@ -298,11 +240,22 @@ func setupTestData(t *testing.T) {
 		}
 	}
 	
-	// create simlinks
+	// create simlinks & check errors return value
 	if os.Getenv("TEST_SKIP_SYMLINKS") == "" {
-		os.Symlink("test_file.txt", "testdata/symlink_to_file")
-		os.Symlink("dir1", "testdata/symlink_to_dir") 
-		os.Symlink("symlink_to_file", "testdata/nested_symlinks/double_symlink")
+		err := os.Symlink("test_file.txt", "testdata/symlink_to_file")
+		if err != nil && !os.IsExist(err) {
+			t.Logf("Note: could not create symlink: %v", err)
+		}
+		
+		err = os.Symlink("dir1", "testdata/symlink_to_dir")
+		if err != nil && !os.IsExist(err) {
+			t.Logf("Note: could not create symlink: %v", err)
+		}
+		
+		err = os.Symlink("symlink_to_file", "testdata/nested_symlinks/double_symlink")
+		if err != nil && !os.IsExist(err) {
+			t.Logf("Note: could not create symlink: %v", err)
+		}
 	}
 }
 
