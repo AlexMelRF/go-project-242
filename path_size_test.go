@@ -26,16 +26,6 @@ func TestGetSize(t *testing.T) {
 	// del test data
 	defer cleanupTestData(t)
 
-	// test cases
-	testDataArray := []testCase{
-		{"./testdata/dir1", 30, true, false},
-		{"./testdata/dir1/dir2", 15, true, false},
-		{"./testdata/dir1", 45, true, true},
-		{"./testdata/dir1/dir2", 15, false, true},
-		// for ./testdata we only check that the size is > 0
-		// since the exact size may vary
-	}
-
 	for _, td := range testDataArray {
 		t.Run(td.path, func(t *testing.T) {
 			result, err := GetSize(td.path, td.recursive, td.all)
