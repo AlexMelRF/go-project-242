@@ -8,17 +8,17 @@ import (
 )
 
 func GetPathSize(path string, recursive, human, all bool) (string, error) {
-    size, err := GetSize(path, recursive, all)
+    size, err := getSize(path, recursive, all)
 	if err != nil {
         return "", err
     }
 
-    s := FormatSize(size, human)
+    s := formatSize(size, human)
     
     return s, err
 }
 
-func GetSize(path string, recursive, all bool) (int64, error) {
+func getSize(path string, recursive, all bool) (int64, error) {
     var totalSize int64
 
     // get info about the root path
@@ -92,7 +92,7 @@ func GetSize(path string, recursive, all bool) (int64, error) {
     return totalSize, err
 }
 
-func FormatSize(size int64, human bool) string {
+func formatSize(size int64, human bool) string {
     if !human {
         return fmt.Sprintf("%dB", size)
     }

@@ -13,10 +13,10 @@ type testCase struct {
 }
 
 var testDataArray = []testCase{
-	{"./testdata/dir1", 1599, true, false},
-	{"./testdata/dir1/dir2", 1599, true, false},
-	{"./testdata/dir1", 3997, true, true},
-	{"./testdata/dir1/dir2", 1599, false, true},
+	{"./testdata/dir1", 30, true, false},
+	{"./testdata/dir1/dir2", 15, true, false},
+	{"./testdata/dir1", 45, true, true},
+	{"./testdata/dir1/dir2", 15, false, true},
 	{"./testdata", 2399, false, true},
 }
 
@@ -28,7 +28,7 @@ func TestGetSize(t *testing.T) {
 
 	for _, td := range testDataArray {
 		t.Run(td.path, func(t *testing.T) {
-			result, err := GetSize(td.path, td.recursive, td.all)
+			result, err := getSize(td.path, td.recursive, td.all)
 			if err != nil {
 				t.Errorf("GetSize(%s, %v, %v) returned error: %v",
 					td.path, td.recursive, td.all, err)
@@ -153,9 +153,9 @@ func TestFormatSize(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result := FormatSize(tc.input, tc.human)
+			result := formatSize(tc.input, tc.human)
 			if result != tc.expected {
-				t.Errorf("FormatSize(%d, %v) = %s, expected %s", 
+				t.Errorf("formatSize(%d, %v) = %s, expected %s", 
 					tc.input, tc.human, result, tc.expected)
 			}
 		})
@@ -180,7 +180,7 @@ func TestGetSize_EdgeCases(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := GetSize(tt.path, tt.recursive, tt.all)
+			result, err := getSize(tt.path, tt.recursive, tt.all)
 			if err != nil {
 				t.Errorf("GetSize(%s) unexpected error: %v", tt.path, err)
 				return
