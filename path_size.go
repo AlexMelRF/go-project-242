@@ -9,6 +9,7 @@ import (
 
 func GetPathSize(path string, recursive, human, all bool) (string, error) {
     size, err := getSize(path, recursive, all)
+    
 	if err != nil {
         return "", err
     }
