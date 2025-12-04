@@ -133,7 +133,7 @@ func TestFormatSize(t *testing.T) {
 		{"small_no_human", 123, false, "123B"},
 		{"large_no_human", 123456789, false, "123456789B"},
 
-		// with flag  -H
+		// with flag -H
 		{"zero_bytes", 0, true, "0B"},
 		{"bytes_under_1k", 1023, true, "1023B"},
 		{"exactly_1k", 1024, true, "1.0KB"},
