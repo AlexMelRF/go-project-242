@@ -101,19 +101,19 @@ func TestGetPathSize(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := GetPathSize(tt.path, tt.recursive, tt.human, tt.all)
-			
+
 			if tt.wantErr {
 				if err == nil {
 					t.Errorf("GetPathSize(%s) expected error, got nil", tt.path)
 				}
 				return
 			}
-			
+
 			if err != nil {
 				t.Errorf("GetPathSize(%s) unexpected error: %v", tt.path, err)
 				return
 			}
-			
+
 			if result == "" {
 				t.Errorf("GetPathSize(%s) returned empty string", tt.path)
 			}
@@ -144,7 +144,7 @@ func TestFormatSize(t *testing.T) {
 		{"exactly_1tb", 1024 * 1024 * 1024 * 1024, true, "1.0TB"},
 		{"exactly_1pb", 1024 * 1024 * 1024 * 1024 * 1024, true, "1.0PB"},
 		{"exactly_1eb", 1024 * 1024 * 1024 * 1024 * 1024 * 1024, true, "1.0EB"},
-		
+
 		{"boundary_1023", 1023, true, "1023B"},
 		{"boundary_1024", 1024, true, "1.0KB"},
 		{"boundary_1025", 1025, true, "1.0KB"},
@@ -155,7 +155,7 @@ func TestFormatSize(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			result := formatSize(tc.input, tc.human)
 			if result != tc.expected {
-				t.Errorf("formatSize(%d, %v) = %s, expected %s", 
+				t.Errorf("formatSize(%d, %v) = %s, expected %s",
 					tc.input, tc.human, result, tc.expected)
 			}
 		})
@@ -185,7 +185,7 @@ func TestGetSize_EdgeCases(t *testing.T) {
 				t.Errorf("GetSize(%s) unexpected error: %v", tt.path, err)
 				return
 			}
-			
+
 			if result < 0 {
 				t.Errorf("GetSize(%s) returned negative size: %d", tt.path, result)
 			}
@@ -193,19 +193,18 @@ func TestGetSize_EdgeCases(t *testing.T) {
 	}
 }
 
-
 func setupTestData(t *testing.T) {
 	cleanupTestData(t)
-	
+
 	dirs := []string{
 		"testdata",
-		"testdata/dir1", 
+		"testdata/dir1",
 		"testdata/dir1/dir2",
 		"testdata/empty_dir",
 		"testdata/only_hidden",
 		"testdata/nested_symlinks",
 	}
-	
+
 	for _, dir := range dirs {
 		err := os.MkdirAll(dir, 0755)
 		if err != nil {
@@ -215,33 +214,33 @@ func setupTestData(t *testing.T) {
 
 	files := map[string]string{
 		"testdata/test_file.txt":       "test content123", // 15 bytes
-		"testdata/.hidden_file":        "test content123", // 15 bytes  
+		"testdata/.hidden_file":        "test content123", // 15 bytes
 		"testdata/unicode_файл.txt":    "test content123", // 15 bytes
 		"testdata/dir1/file1.txt":      "test content123", // 15 bytes
 		"testdata/dir1/.hidden_file":   "test content123", // 15 bytes
 		"testdata/dir1/dir2/file2.txt": "test content123", // 15 bytes
 		"testdata/only_hidden/.hidden": "test content123", // 15 bytes
 	}
-	
+
 	for file, content := range files {
 		err := os.WriteFile(file, []byte(content), 0644)
 		if err != nil {
 			t.Fatalf("Failed to create test file %s: %v", file, err)
 		}
 	}
-	
+
 	// create simlinks & check errors return value
 	if os.Getenv("TEST_SKIP_SYMLINKS") == "" {
 		err := os.Symlink("test_file.txt", "testdata/symlink_to_file")
 		if err != nil && !os.IsExist(err) {
 			t.Logf("Note: could not create symlink: %v", err)
 		}
-		
+
 		err = os.Symlink("dir1", "testdata/symlink_to_dir")
 		if err != nil && !os.IsExist(err) {
 			t.Logf("Note: could not create symlink: %v", err)
 		}
-		
+
 		err = os.Symlink("symlink_to_file", "testdata/nested_symlinks/double_symlink")
 		if err != nil && !os.IsExist(err) {
 			t.Logf("Note: could not create symlink: %v", err)
